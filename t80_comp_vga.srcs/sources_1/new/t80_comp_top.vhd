@@ -32,29 +32,42 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity t80_comp_top is
     Port (
-        clk : in STD_LOGIC;
-        i_reset : in STD_LOGIC;
+        clk          : in STD_LOGIC;
+        i_reset      : in STD_LOGIC;
+
+        Hsync, Vsync : out std_logic;
+        vgaRed, vgaGreen, vgaBlue : out std_logic_vector(3 downto 0);
+
         -- test IO
-        sw : in std_logic_vector(3 downto 0);
+        sw       : in std_logic_vector(15 downto 0);
         JA2, JA1 : out std_logic;
-        led : out std_logic_vector(3 downto 0)
+        led      : out std_logic_vector(3 downto 0)
     );
 
 end t80_comp_top;
 
 architecture Behavioral of t80_comp_top is
 
-    signal clk25 : std_logic;
-    signal n_reset : std_logic;
+    signal clk25     : std_logic;
+    signal n_reset   : std_logic;
     signal clk_div16 : std_logic;
 
-begin
+    signal video_on          : std_logic;
+    signal pixel_x, pixel_y  : integer;
+    signal rgb_reg_0         : std_logic_vector(11 downto 0);
 
+begin
+    -- drive IO
+    -- test IO
     JA1 <= clk25;
     JA2 <= clk_div16;
-    led <= sw;
+    led <= sw(15 downto 12);
 
     n_reset <= not i_reset;
+    -- video display
+    vgaRed   <= (rgb_reg_0(11 downto 8)) when video_on = '1' else (others => '0');
+    vgaGreen <= (rgb_reg_0(7 downto 4))  when video_on = '1' else (others  => '0');
+    vgaBlue  <= (rgb_reg_0(3 downto 0))  when video_on = '1' else (others  => '0');
 
     --------------------------------------------------
     -- Instantiate Clock generation
@@ -68,5 +81,32 @@ begin
             o_clk_div8 => open,
             o_clk_div16 => clk_div16
         );
+
+    --------------------------------------------------
+    -- Instantiate VGA sync circuit
+    --------------------------------------------------
+    vga_control_unit : entity work.vga_controller
+        port map(
+            pixel_clk => clk25,
+            reset_n   => n_reset,
+            h_sync    => Hsync,
+            v_sync    => Vsync,
+            disp_ena  => video_on,
+            column    => pixel_x,
+            row       => pixel_y,
+            n_blank   => open,
+            n_sync    => open
+        );
+
+    --------------------------------------------------
+    -- Instantiate image generator
+    --------------------------------------------------
+    image_gen_0 : entity work.simple_image_gen
+        port map(
+            clk      => clk,
+            reset_n  => n_reset,
+            disp_ena => video_on,
+            bits_in  => sw(11 downto 0),
+            rgb      => rgb_reg_0);
 
 end Behavioral;
