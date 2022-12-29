@@ -10,30 +10,41 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="940000fs"></ZoomStartTime>
-      <ZoomEndTime time="1018601fs"></ZoomEndTime>
-      <Cursor1Time time="1000000fs"></Cursor1Time>
+      <ZoomStartTime time="187166667fs"></ZoomStartTime>
+      <ZoomEndTime time="188166667fs"></ZoomEndTime>
+      <Cursor1Time time="188000000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="179"></NameColumnWidth>
-      <ValueColumnWidth column_width="104"></ValueColumnWidth>
+      <ValueColumnWidth column_width="96"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="4" />
-   <wvobject type="logic" fp_name="/t80_comp_tb/main_clk">
-      <obj_property name="ElementShortName">main_clk</obj_property>
-      <obj_property name="ObjectShortName">main_clk</obj_property>
-   </wvobject>
+   <WVObjectSize size="7" />
    <wvobject type="logic" fp_name="/t80_comp_tb/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/t80_comp_tb/main_inst/clk25">
-      <obj_property name="ElementShortName">clk25</obj_property>
-      <obj_property name="ObjectShortName">clk25</obj_property>
+   <wvobject type="logic" fp_name="/t80_comp_tb/clock">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/t80_comp_tb/main_inst/led">
-      <obj_property name="ElementShortName">led[3:0]</obj_property>
-      <obj_property name="ObjectShortName">led[3:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/Hsync">
+      <obj_property name="ElementShortName">Hsync</obj_property>
+      <obj_property name="ObjectShortName">Hsync</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/Vsync">
+      <obj_property name="ElementShortName">Vsync</obj_property>
+      <obj_property name="ObjectShortName">Vsync</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/video_on">
+      <obj_property name="ElementShortName">video_on</obj_property>
+      <obj_property name="ObjectShortName">video_on</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/t80_comp_tb/DUT/pixel_x">
+      <obj_property name="ElementShortName">pixel_x</obj_property>
+      <obj_property name="ObjectShortName">pixel_x</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/t80_comp_tb/DUT/pixel_y">
+      <obj_property name="ElementShortName">pixel_y</obj_property>
+      <obj_property name="ObjectShortName">pixel_y</obj_property>
    </wvobject>
 </wave_config>
