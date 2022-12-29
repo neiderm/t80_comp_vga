@@ -54,7 +54,15 @@ architecture Behavioral of t80_comp_top is
 
     signal video_on          : std_logic;
     signal pixel_x, pixel_y  : integer;
+
     signal rgb_reg_0         : std_logic_vector(11 downto 0);
+    signal rgb_reg_1         : std_logic_vector(11 downto 0);
+
+    -- baggage?
+    signal rgb_reg                      : std_logic_vector(11 downto 0);
+
+
+    signal SEL               : std_logic;
 
 begin
     -- drive IO
@@ -63,11 +71,18 @@ begin
     JA2 <= clk_div16;
     led <= sw(15 downto 12);
 
+    SEL <= sw(15);
+    
     n_reset <= not i_reset;
-    -- video display
-    vgaRed   <= (rgb_reg_0(11 downto 8)) when video_on = '1' else (others => '0');
-    vgaGreen <= (rgb_reg_0(7 downto 4))  when video_on = '1' else (others  => '0');
-    vgaBlue  <= (rgb_reg_0(3 downto 0))  when video_on = '1' else (others  => '0');
+
+    --------------------------------------------------
+    -- select image generator and drive the VGA outputs
+    --------------------------------------------------
+    rgb_reg  <= rgb_reg_0 when (SEL = '1') else rgb_reg_1;
+
+    vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
+    vgaGreen <= (rgb_reg(7 downto 4)) when video_on = '1' else (others  => '0');
+    vgaBlue  <= (rgb_reg(3 downto 0)) when video_on = '1' else (others  => '0');
 
     --------------------------------------------------
     -- Instantiate Clock generation
@@ -108,5 +123,18 @@ begin
             disp_ena => video_on,
             bits_in  => sw(11 downto 0),
             rgb      => rgb_reg_0);
+
+    --------------------------------------------------
+    -- Instantiate image generator 2 to another rgb buffer
+    --------------------------------------------------
+    image_gen_unit : entity work.hw_image_generator
+        port map(
+            disp_ena => video_on,
+            row      => pixel_x,
+            column   => pixel_y,
+
+            red      => rgb_reg_1(11 downto 8),
+            green    => rgb_reg_1(7 downto 4),
+            blue     => rgb_reg_1(3 downto 0));            
 
 end Behavioral;
