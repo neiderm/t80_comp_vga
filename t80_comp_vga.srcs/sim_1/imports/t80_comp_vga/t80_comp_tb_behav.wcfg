@@ -6,19 +6,20 @@
       <db_ref path="t80_comp_tb_behav.wdb" id="1">
          <top_modules>
             <top_module name="t80_comp_tb" />
+            <top_module name="t80_pack" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="187166667fs"></ZoomStartTime>
-      <ZoomEndTime time="188166667fs"></ZoomEndTime>
-      <Cursor1Time time="188000000fs"></Cursor1Time>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="1000000fs"></ZoomEndTime>
+      <Cursor1Time time="1000000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="179"></NameColumnWidth>
-      <ValueColumnWidth column_width="96"></ValueColumnWidth>
+      <ValueColumnWidth column_width="92"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="7" />
+   <WVObjectSize size="14" />
    <wvobject type="logic" fp_name="/t80_comp_tb/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
@@ -46,5 +47,33 @@
    <wvobject type="other" fp_name="/t80_comp_tb/DUT/pixel_y">
       <obj_property name="ElementShortName">pixel_y</obj_property>
       <obj_property name="ObjectShortName">pixel_y</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/cpu_m1_l">
+      <obj_property name="ElementShortName">cpu_m1_l</obj_property>
+      <obj_property name="ObjectShortName">cpu_m1_l</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/cpu_mreq_l">
+      <obj_property name="ElementShortName">cpu_mreq_l</obj_property>
+      <obj_property name="ObjectShortName">cpu_mreq_l</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/cpu_rd_l">
+      <obj_property name="ElementShortName">cpu_rd_l</obj_property>
+      <obj_property name="ObjectShortName">cpu_rd_l</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/cpu_wr_l">
+      <obj_property name="ElementShortName">cpu_wr_l</obj_property>
+      <obj_property name="ObjectShortName">cpu_wr_l</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/t80_comp_tb/DUT/cpu_addr">
+      <obj_property name="ElementShortName">cpu_addr[15:0]</obj_property>
+      <obj_property name="ObjectShortName">cpu_addr[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/t80_comp_tb/DUT/cpu_data_out">
+      <obj_property name="ElementShortName">cpu_data_out[7:0]</obj_property>
+      <obj_property name="ObjectShortName">cpu_data_out[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/t80_comp_tb/DUT/cpu_data_in">
+      <obj_property name="ElementShortName">cpu_data_in[7:0]</obj_property>
+      <obj_property name="ObjectShortName">cpu_data_in[7:0]</obj_property>
    </wvobject>
 </wave_config>
