@@ -60,7 +60,6 @@ architecture Behavioral of t80_comp_top is
     signal pixel_x, pixel_y : integer;
 
     -- cpu
-    --    signal cpu_ena          : std_logic;
     signal cpu_m1_l         : std_logic;
     signal cpu_mreq_l       : std_logic;
     signal cpu_iorq_l       : std_logic;
@@ -77,6 +76,11 @@ architecture Behavioral of t80_comp_top is
     signal cpu_data_out     : std_logic_vector(7 downto 0);
     signal cpu_data_in      : std_logic_vector(7 downto 0);
 
+    signal program_rom_din  : std_logic_vector(7 downto 0);
+    signal program_rom_cs_l : std_logic;
+
+    signal rams_data_out    : std_logic_vector(7 downto 0);
+    
     -- video
     signal rgb_reg_0        : std_logic_vector(11 downto 0);
     signal rgb_reg_1        : std_logic_vector(11 downto 0);
@@ -127,15 +131,31 @@ begin
         );
 
     --------------------------------------------------
+    -- work RAM
+    --------------------------------------------------
+  u_rams : entity work.rams_sp_rf
+    port map (
+      clk  => clk_div16,
+
+      we   => '0', -- todo
+      en   => not program_rom_cs_l, -- RAM enabled if not program ROM selected
+
+      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
+      di   => cpu_data_out, -- CPU only source of RAM data
+      do   => rams_data_out
+      );
+
+    --------------------------------------------------
     -- internal program rom
     --------------------------------------------------
     u_program_rom : entity work.roms_1
         port map(
             clk_i            => clk_div16, -- todo cpu clock rate?
-            en               => '1', -- ena_6
+            en               => program_rom_cs_l,
             addr(5 downto 0) => cpu_addr(5 downto 0), -- 64-byte test ROM
-            data             => cpu_data_in -- program_rom_dinl 
+            data             => program_rom_din 
         );
+ 
     --------------------------------------------------
     -- Instantiate t80
     --------------------------------------------------
@@ -161,13 +181,19 @@ begin
         );
 
     --------------------------------------------------
+    -- primary addr decode
+    --------------------------------------------------
+    program_rom_cs_l <= '1' when cpu_addr(15) = '0' else '1';  
+    cpu_data_in <= rams_data_out when program_rom_cs_l = '0' else program_rom_din;
+
+    --------------------------------------------------
     -- select image generator and drive the VGA outputs
     --------------------------------------------------
     -- todo component see startingelectronics.org/software/VHDL-CPLD-course/tut4-multiplexers/
     rgb_reg <= rgb_reg_0 when (SEL = "00") else
                rgb_reg_1 when (SEL = "01") else
                rgb_reg_2 when (SEL = "10") else
-               (others                                                      => '1');
+               (others => '1');
 
     vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
     vgaGreen <= (rgb_reg(7 downto 4)) when video_on = '1' else (others  => '0');
