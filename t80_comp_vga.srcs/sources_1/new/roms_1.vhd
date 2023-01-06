@@ -21,9 +21,19 @@ architecture behavioral of roms_1 is
 
     signal ROM : rom_type :=
         (
-        0       => x"00", -- nop
-        1       => x"FF", -- rst38
-        2 to 63 => x"00"
+        0       => x"21", --	ld hl,08000h	;0100	21 00 80
+	    1       => x"00",
+        2       => x"80",
+
+        3       => x"af", --	xor a			;0103	af
+        4       => x"3c", --	inc a			;0104	3c
+        5       => x"77", --	ld (hl),a		;0105	77
+
+        6       => x"c3", --	jp 00004h		;0106	c3 04 00
+        7       => x"04",
+        8       => x"00",
+
+        9 to 63 => x"00"
         );
 
     -- attribute rom_style : string;
