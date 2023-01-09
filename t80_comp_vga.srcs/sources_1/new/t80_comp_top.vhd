@@ -56,6 +56,14 @@ architecture Behavioral of t80_comp_top is
     signal clk25            : std_logic;
     signal clk_div16        : std_logic;
 
+    -- video
+    signal rgb_reg_0        : std_logic_vector(11 downto 0);
+    signal rgb_reg_1        : std_logic_vector(11 downto 0);
+    signal rgb_reg_2        : std_logic_vector(11 downto 0);
+
+    signal rgb_reg          : std_logic_vector(11 downto 0);
+
+    signal SEL              : std_logic_vector(1 downto 0);
     signal video_on         : std_logic;
     signal pixel_x, pixel_y : integer;
 
@@ -77,18 +85,13 @@ architecture Behavioral of t80_comp_top is
     signal cpu_data_in      : std_logic_vector(7 downto 0);
 
     signal program_rom_din  : std_logic_vector(7 downto 0);
-    signal program_rom_cs_l : std_logic;
+    signal program_rom_cs   : std_logic;
 
     signal rams_data_out    : std_logic_vector(7 downto 0);
-    
-    -- video
-    signal rgb_reg_0        : std_logic_vector(11 downto 0);
-    signal rgb_reg_1        : std_logic_vector(11 downto 0);
-    signal rgb_reg_2        : std_logic_vector(11 downto 0);
 
-    signal rgb_reg          : std_logic_vector(11 downto 0);
+    signal mem_wr_l         : std_logic := '1';
 
-    signal SEL              : std_logic_vector(1 downto 0);
+    signal work_ram_cs_l    : std_logic := '1';
 
 begin
     -- drive IO
@@ -114,48 +117,6 @@ begin
             o_clk_div16 => clk_div16
         );
 
-    --------------------------------------------------
-    -- video subsystem
-    --------------------------------------------------
-    vga_control_unit : entity work.vga_controller
-        port map(
-            pixel_clk => clk25,
-            reset_n   => n_reset,
-            h_sync    => Hsync,
-            v_sync    => Vsync,
-            disp_ena  => video_on, -- out
-            column    => pixel_x,
-            row       => pixel_y,
-            n_blank   => open,
-            n_sync    => open
-        );
-
-    --------------------------------------------------
-    -- work RAM
-    --------------------------------------------------
-  u_rams : entity work.rams_sp_rf
-    port map (
-      clk  => clk_div16,
-
-      we   => '0', -- todo
-      en   => not program_rom_cs_l, -- RAM enabled if not program ROM selected
-
-      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
-      di   => cpu_data_out, -- CPU only source of RAM data
-      do   => rams_data_out
-      );
-
-    --------------------------------------------------
-    -- internal program rom
-    --------------------------------------------------
-    u_program_rom : entity work.roms_1
-        port map(
-            clk_i            => clk_div16, -- todo cpu clock rate?
-            en               => program_rom_cs_l,
-            addr(5 downto 0) => cpu_addr(5 downto 0), -- 64-byte test ROM
-            data             => program_rom_din 
-        );
- 
     --------------------------------------------------
     -- Instantiate t80
     --------------------------------------------------
@@ -183,8 +144,57 @@ begin
     --------------------------------------------------
     -- primary addr decode
     --------------------------------------------------
-    program_rom_cs_l <= '1' when cpu_addr(15) = '0' else '1';  
-    cpu_data_in <= rams_data_out when program_rom_cs_l = '0' else program_rom_din;
+    program_rom_cs <= '1' when cpu_addr(15) = '0' else '0'; -- ROM at $0000, RAM at $8000
+
+    -- work RAM cs is active low 
+    work_ram_cs_l  <= '0' when cpu_addr(15 downto 11) = "10000" else '1'; -- Work RAM at $8000 (2k i.e. 11 address-bits)
+--    gfx_ram_cs_l   <= '0' cpu_addr(15 downto 11) = "10001" else '1'; -- GFX RAM at $8800 (2k i.e. 11 address-bits)
+
+    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; -- else x"FF"
+
+    mem_wr_l       <= cpu_wr_l or cpu_mreq_l;
+
+    --------------------------------------------------
+    -- work RAM
+    --------------------------------------------------
+  u_rams : entity work.rams_sp_rf
+    port map (
+      -- clock delay from rams?
+
+      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
+      di   => cpu_data_out,         -- CPU only source of RAM data
+      do   => rams_data_out,
+      we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
+      en   => not work_ram_cs_l,           -- chip enable, active high 
+      clk  => clk_div16
+      );
+
+    --------------------------------------------------
+    -- internal program rom
+    --------------------------------------------------
+    u_program_rom : entity work.roms_1
+        port map(
+            clk_i            => clk_div16, -- todo cpu clock rate?
+            en               => program_rom_cs,
+            addr(5 downto 0) => cpu_addr(5 downto 0), -- 64-byte test ROM
+            data             => program_rom_din 
+        );
+ 
+    --------------------------------------------------
+    -- video subsystem
+    --------------------------------------------------
+    vga_control_unit : entity work.vga_controller
+        port map(
+            pixel_clk => clk25,
+            reset_n   => n_reset,
+            h_sync    => Hsync,
+            v_sync    => Vsync,
+            disp_ena  => video_on, -- out
+            column    => pixel_x,
+            row       => pixel_y,
+            n_blank   => open,
+            n_sync    => open
+        );
 
     --------------------------------------------------
     -- select image generator and drive the VGA outputs
@@ -230,8 +240,6 @@ begin
             disp_ena => video_on,
             pix_x    => pixel_x,
             pix_y    => pixel_y,
-            --            clock_50 => clk,
-            --            reset    => '0', -- tmp not used
             VGA_R    => rgb_reg_2(11 downto 8),
             VGA_G    => rgb_reg_2(7 downto 4),
             VGA_B    => rgb_reg_2(3 downto 0));
