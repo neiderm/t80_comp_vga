@@ -1,6 +1,6 @@
 -- Single-Port Block RAM Read-First Mode
 -- ug901-vivado-synthesis-examples/rams_sp_rf.vhd
--- Modified to make equivalent to the Xilinx XST User Guide single-port RAM with synchronous read (read through)
+-- Modified for 8-bit data
 --
 library ieee;
 use ieee.std_logic_1164.all;
@@ -20,7 +20,6 @@ end rams_sp_rf;
 architecture syn of rams_sp_rf is
  type ram_type is array (0 to 1023) of std_logic_vector(7 downto 0);
  signal RAM : ram_type := (others => (others => '0'));
- signal addr_int : std_logic_vector(9 downto 0); 
 begin
  process(clk)
  begin
@@ -29,11 +28,9 @@ begin
     if we = '1' then
      RAM(to_integer(unsigned(addr))) <= di;
     end if;
---    do <= RAM(to_integer(unsigned(addr)));
-    addr_int <= addr; -- latch address for synchronous read
+    do <= RAM(to_integer(unsigned(addr)));
    end if;
   end if;
  end process;
- do <= RAM(to_integer(unsigned(addr_int)));
 
 end syn;
