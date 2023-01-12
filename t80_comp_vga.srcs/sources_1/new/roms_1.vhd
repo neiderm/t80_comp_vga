@@ -17,7 +17,7 @@ end roms_1;
 
 architecture behavioral of roms_1 is
 
-    type rom_type is array (63 downto 0) of std_logic_vector(7 downto 0);
+    type rom_type is array (0 to 63) of std_logic_vector(7 downto 0);
 
     signal ROM : rom_type :=
         (
@@ -26,18 +26,16 @@ architecture behavioral of roms_1 is
         2       => x"80",
 
         3       => x"af", --	xor a			;0103	af
-        4       => x"3c", --	inc a			;0104	3c
-        5       => x"77", --	ld (hl),a		;0105	77
+        4       => x"7e", --    ld a,(hl)
+        5       => x"3c", --	inc a			;0104	3c
+        6       => x"77", --	ld (hl),a		;0105	77
 
-        6       => x"c3", --	jp 00004h		;0106	c3 04 00
-        7       => x"04",
-        8       => x"00",
+        7       => x"c3", --	jp 00004h		;0106	c3 04 00
+        8       => x"04",
+        9       => x"00",
 
-        9 to 63 => x"00"
+       10 to 63 => x"00"
         );
-
-    -- attribute rom_style : string;
-    -- attribute rom_style of ROM : signal is "block";
 
 begin
     process (clk_i)

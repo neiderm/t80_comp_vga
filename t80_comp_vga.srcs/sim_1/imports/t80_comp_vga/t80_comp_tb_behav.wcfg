@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="11833333fs"></ZoomStartTime>
-      <ZoomEndTime time="22833334fs"></ZoomEndTime>
-      <Cursor1Time time="21000000fs"></Cursor1Time>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="11000001fs"></ZoomEndTime>
+      <Cursor1Time time="0fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="179"></NameColumnWidth>
-      <ValueColumnWidth column_width="84"></ValueColumnWidth>
+      <ValueColumnWidth column_width="80"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="16" />
+   <WVObjectSize size="17" />
    <wvobject type="logic" fp_name="/t80_comp_tb/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
@@ -83,5 +83,9 @@
    <wvobject type="array" fp_name="/t80_comp_tb/DUT/u_rams/do">
       <obj_property name="ElementShortName">do[7:0]</obj_property>
       <obj_property name="ObjectShortName">do[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/t80_comp_tb/DUT/u_rams/en">
+      <obj_property name="ElementShortName">en</obj_property>
+      <obj_property name="ObjectShortName">en</obj_property>
    </wvobject>
 </wave_config>

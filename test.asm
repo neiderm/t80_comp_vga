@@ -16,6 +16,8 @@ org 0
    xor a,a
 
 loop:
+   ;; Note: don't try to read from uninitialized array in simulation
+   ld a, (hl)
 
    ;; Increment the value of A
    inc a

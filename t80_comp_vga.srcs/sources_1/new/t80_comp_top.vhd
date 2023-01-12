@@ -157,18 +157,29 @@ begin
     --------------------------------------------------
     -- work RAM
     --------------------------------------------------
-  u_rams : entity work.rams_sp_rf
+  u_rams : entity work.rams_08
     port map (
       -- clock delay from rams?
-
-      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
+      a    => cpu_addr(9 downto 0), -- 1024-byte test RAM
       di   => cpu_data_out,         -- CPU only source of RAM data
       do   => rams_data_out,
       we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
-      en   => not work_ram_cs_l,           -- chip enable, active high 
+      en   => '1', -- tmp? not work_ram_cs_l,           -- chip enable, active high 
       clk  => clk_div16
       );
-
+--
+    --------------------------------------------------
+--  u_rams : entity work.rams_sp_rf
+--    port map (
+--      -- clock delay from rams?
+--      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
+--      di   => cpu_data_out,         -- CPU only source of RAM data
+--      do   => rams_data_out,
+--      we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
+--      en   => '1', --tmp? not work_ram_cs_l,           -- chip enable, active high 
+--      clk  => clk_div16
+--      );
+--
     --------------------------------------------------
     -- internal program rom
     --------------------------------------------------
