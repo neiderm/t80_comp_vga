@@ -15,7 +15,9 @@
 -- Revision:
 -- Revision 0.01 - File Created
 -- Additional Comments:
--- 
+--  mostly original by Glenn Neidermeier
+--   primary references are pacman vhdl project and particularly 
+--   http://searle.x10host.com/Multicomp/index.html#BusIsolation
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -88,10 +90,11 @@ architecture Behavioral of t80_comp_top is
     signal program_rom_cs   : std_logic;
 
     signal rams_data_out    : std_logic_vector(7 downto 0);
+    signal rams_data_in     : std_logic_vector(7 downto 0);
 
-    signal mem_wr_l         : std_logic := '1';
+    signal mem_wr_l         : std_logic;
 
-    signal work_ram_cs_l    : std_logic := '1';
+    signal work_ram_cs_l    : std_logic;
 
 begin
     -- drive IO
@@ -122,7 +125,7 @@ begin
     --------------------------------------------------
     u_cpu : entity work.T80s
         port map(
-            RESET_n => n_reset, -- watchdog_reset_l,
+            RESET_n => n_reset,
             CLK_n   => clk_div16,
             WAIT_n  => '1', -- cpu_wait_l,
             INT_n   => cpu_int_l,
@@ -150,21 +153,27 @@ begin
     work_ram_cs_l  <= '0' when cpu_addr(15 downto 11) = "10000" else '1'; -- Work RAM at $8000 (2k i.e. 11 address-bits)
 --    gfx_ram_cs_l   <= '0' cpu_addr(15 downto 11) = "10001" else '1'; -- GFX RAM at $8800 (2k i.e. 11 address-bits)
 
-    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; -- else x"FF"
+--    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; -- so this was sorta working but latching stale data on the bus at times
+    cpu_data_in <=
+        program_rom_din when program_rom_cs = '1' else
+        rams_data_out   when work_ram_cs_l = '1' else
+        x"FF";
 
-    mem_wr_l       <= cpu_wr_l or cpu_mreq_l;
+    mem_wr_l       <= cpu_wr_l or cpu_mreq_l; -- WR and MREQ
+
+--    rams_data_in <= cpu_data_out when mem_wr_l = '0' else x"ZZ";
+--    rams_data_in <= cpu_data_out;
 
     --------------------------------------------------
     -- work RAM
     --------------------------------------------------
   u_rams : entity work.rams_08
     port map (
-      -- clock delay from rams?
-      a    => cpu_addr(9 downto 0), -- 1024-byte test RAM
-      di   => cpu_data_out,         -- CPU only source of RAM data
+      a    => cpu_addr(9 downto 0),
+      di   => cpu_data_out,  --rams_data_in
       do   => rams_data_out,
       we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
-      en   => '1', -- tmp? not work_ram_cs_l,           -- chip enable, active high 
+      en   =>  not work_ram_cs_l,             -- chip enable, active high (optional but useful to observe in the sim)
       clk  => clk_div16
       );
 --
@@ -172,11 +181,11 @@ begin
 --  u_rams : entity work.rams_sp_rf
 --    port map (
 --      -- clock delay from rams?
---      addr => cpu_addr(9 downto 0), -- 1024-byte test RAM
---      di   => cpu_data_out,         -- CPU only source of RAM data
+--      addr => cpu_addr(9 downto 0),
+--      di   => cpu_data_out,
 --      do   => rams_data_out,
---      we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
---      en   => '1', --tmp? not work_ram_cs_l,           -- chip enable, active high 
+--      we   => not(mem_wr_l or work_ram_cs_l),
+--      en   => '1', --tmp? not work_ram_cs_l,
 --      clk  => clk_div16
 --      );
 --
@@ -185,10 +194,10 @@ begin
     --------------------------------------------------
     u_program_rom : entity work.roms_1
         port map(
-            clk_i            => clk_div16, -- todo cpu clock rate?
-            en               => program_rom_cs,
-            addr(5 downto 0) => cpu_addr(5 downto 0), -- 64-byte test ROM
-            data             => program_rom_din 
+            clk_i  => clk_div16,
+            en     => program_rom_cs,
+            addr   => cpu_addr(8 downto 0),
+            data   => program_rom_din 
         );
  
     --------------------------------------------------

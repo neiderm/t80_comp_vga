@@ -1,32 +1,30 @@
 ;;
 ;; This program operates in an endless loop, and increments the
 ;; value stored at a particular address.
-;;
-;; Since there is no output it is a tricky-program to test, but
-;; if you're single-stepping through code, and can dump RAM then
-;; it is a nice standalone example program.
-;;
-
+;; Modified for use as benchtest of t80 core.
 org 0
 
    ;; Set HL to the address we're going to modify.
    ld hl, output
 
-   ;; A is zero.
-   xor a,a
+   ;; A start count
+   ld a, 0x10
 
 loop:
-   ;; Note: don't try to read from uninitialized array in simulation
-   ld a, (hl)
-
-   ;; Increment the value of A
-   inc a
-
-   ;; Store it in the address
+   ;; Store counter
    ld (hl), a
 
+   ;; Note: don't try to read from uninitialized array in simulation!
+   ld b, (hl)
+
+   ;; Increment Address
+   inc hl
+ 
+   ;; Increment counter
+   inc a
+
    ;; Repeat.  Forever.
-   jp loop
+   jr loop
 
 org 0x8000
 output:

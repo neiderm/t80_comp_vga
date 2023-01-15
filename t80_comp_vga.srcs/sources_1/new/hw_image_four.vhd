@@ -30,7 +30,7 @@ end sync_VGA_visualTest2;
 
 architecture arch of sync_VGA_visualTest2 is
 begin
-    process (pix_x, pix_y)
+    process (disp_ena, pix_x, pix_y)
     begin
         if (disp_ena = '1') then
             -- divide VGA screen i.e. 640-by-480 in four equal parts
