@@ -49,12 +49,11 @@ entity t80_comp_top is
         -- test IO
         JA2, JA1 : out std_logic
     );
-
 end t80_comp_top;
 
 architecture Behavioral of t80_comp_top is
 
-    signal n_reset          : std_logic;
+    signal reset_l          : std_logic;
     signal clk25            : std_logic;
     signal clk_div16        : std_logic;
 
@@ -87,14 +86,13 @@ architecture Behavioral of t80_comp_top is
     signal cpu_data_in      : std_logic_vector(7 downto 0);
 
     signal program_rom_din  : std_logic_vector(7 downto 0);
-    signal program_rom_cs   : std_logic;
+    signal program_rom_cs_l : std_logic;
 
     signal rams_data_out    : std_logic_vector(7 downto 0);
-    signal rams_data_in     : std_logic_vector(7 downto 0);
-
-    signal mem_wr_l         : std_logic;
 
     signal work_ram_cs_l    : std_logic;
+
+    signal mem_wr_l         : std_logic;
 
 begin
     -- drive IO
@@ -104,7 +102,7 @@ begin
 
     SEL     <= sw(15 downto 14);
 
-    n_reset <= not i_reset;
+    reset_l <= not i_reset;
 
     --------------------------------------------------
     -- clocks
@@ -112,7 +110,7 @@ begin
     u_clocks : entity work.clock_div_pow2
         port map(
             i_clk       => clk,
-            i_rst       => n_reset, -- not I_RESET (VHDL 2008)
+            i_rst       => reset_l,
 
             o_clk_div2  => open,
             o_clk_div4  => clk25,
@@ -120,12 +118,22 @@ begin
             o_clk_div16 => clk_div16
         );
 
+
+    -- /INT is level triggered, must be held until interrupt is acknowledged (/IORQ during M1 time)
+    -- should also let n_reset so the component can properly initialize
+    irq_req : entity work.sig_int
+        port map(
+            n_sig_in   => Vsync,
+            n_reset_in => (cpu_iorq_l or cpu_m1_l), -- n_IORQ = '0' and n_M1 = '0'
+            n_irq_out  => cpu_int_l
+        );
+
     --------------------------------------------------
     -- Instantiate t80
     --------------------------------------------------
     u_cpu : entity work.T80s
         port map(
-            RESET_n => n_reset,
+            RESET_n => reset_l,
             CLK_n   => clk_div16,
             WAIT_n  => '1', -- cpu_wait_l,
             INT_n   => cpu_int_l,
@@ -147,19 +155,18 @@ begin
     --------------------------------------------------
     -- primary addr decode
     --------------------------------------------------
-    program_rom_cs <= '1' when cpu_addr(15) = '0' else '0'; -- ROM at $0000, RAM at $8000
+    program_rom_cs_l <= '0' when cpu_addr(15) = '0' else '1'; -- ROM at $0000, RAM at $8000
 
-    -- work RAM cs is active low 
-    work_ram_cs_l  <= '0' when cpu_addr(15 downto 11) = "10000" else '1'; -- Work RAM at $8000 (2k i.e. 11 address-bits)
---    gfx_ram_cs_l   <= '0' cpu_addr(15 downto 11) = "10001" else '1'; -- GFX RAM at $8800 (2k i.e. 11 address-bits)
+    work_ram_cs_l    <= '0' when cpu_addr(15 downto 11) = "10000" else '1'; -- Work RAM at $8000 (1k or 2k)
+--    gfx_ram_cs_l   <= '0' cpu_addr(15 downto 11) = "10001" else '1'; -- GFX RAM at $8800 (2k i.e. 
 
---    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; -- so this was sorta working but latching stale data on the bus at times
-    cpu_data_in <=
-        program_rom_din when program_rom_cs = '1' else
-        rams_data_out   when work_ram_cs_l = '1' else
+--    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; --was sorta working but latching stale data on the bus at times
+    cpu_data_in      <=
+        program_rom_din when program_rom_cs_l = '0' else
+        rams_data_out   when work_ram_cs_l    = '0' else
         x"FF";
 
-    mem_wr_l       <= cpu_wr_l or cpu_mreq_l; -- WR and MREQ
+    mem_wr_l         <= cpu_wr_l or cpu_mreq_l; -- WR and MREQ
 
 --    rams_data_in <= cpu_data_out when mem_wr_l = '0' else x"ZZ";
 --    rams_data_in <= cpu_data_out;
@@ -173,7 +180,7 @@ begin
       di   => cpu_data_out,  --rams_data_in
       do   => rams_data_out,
       we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
-      en   =>  not work_ram_cs_l,             -- chip enable, active high (optional but useful to observe in the sim)
+      en   =>  '1',                           -- chip enable, active high
       clk  => clk_div16
       );
 --
@@ -195,7 +202,7 @@ begin
     u_program_rom : entity work.roms_1
         port map(
             clk_i  => clk_div16,
-            en     => program_rom_cs,
+            en     => '1', -- program_rom_cs,
             addr   => cpu_addr(8 downto 0),
             data   => program_rom_din 
         );
@@ -206,7 +213,7 @@ begin
     vga_control_unit : entity work.vga_controller
         port map(
             pixel_clk => clk25,
-            reset_n   => n_reset,
+            reset_n   => reset_l,
             h_sync    => Hsync,
             v_sync    => Vsync,
             disp_ena  => video_on, -- out
@@ -235,7 +242,7 @@ begin
     image_gen_0 : entity work.simple_image_gen
         port map(
             clk      => clk,
-            reset_n  => n_reset,
+            reset_n  => reset_l,
             disp_ena => video_on,
             bits_in  => sw(11 downto 0),
             rgb      => rgb_reg_0);

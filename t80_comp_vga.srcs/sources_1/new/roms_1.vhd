@@ -21,20 +21,11 @@ architecture behavioral of roms_1 is
 --    signal ROM : rom_type :=
 --        (
 --        0       => x"21", --	ld hl,08000h	;0100	21 00 80
---        1       => x"00",
---        2       => x"80",
---        3       => x"af", --	xor a			;0103	af
---        4       => x"7e", --    ld a,(hl)
---        5       => x"3c", --	inc a			;0104	3c
---        6       => x"77", --	ld (hl),a		;0105	77
---        7       => x"c3", --	jp 00004h		;0106	c3 04 00
---        8       => x"04",
---        9       => x"00",
 --       10 to 63 => x"00"
 --        );
 
 	-- xilinx_xstug_examples-master/HDL_Coding_Techniques/rams/rams_20c.vhd
-	type RamType is array (0 to 63) of std_logic_vector(7 downto 0);
+	type RamType is array (0 to 512) of std_logic_vector(7 downto 0);
 
 	impure function InitRamFromFile (RamFileName : in string) return RamType is
 	file RamFile : text is in RamFileName;
@@ -76,3 +67,4 @@ begin
 	end process;
 
 end behavioral;
+
