@@ -64,7 +64,6 @@ architecture Behavioral of t80_comp_top is
 
     signal rgb_reg          : std_logic_vector(11 downto 0);
 
-    signal SEL              : std_logic_vector(1 downto 0);
     signal video_on         : std_logic;
     signal pixel_x, pixel_y : integer;
 
@@ -88,19 +87,24 @@ architecture Behavioral of t80_comp_top is
     signal program_rom_din  : std_logic_vector(7 downto 0);
     signal program_rom_cs_l : std_logic;
 
+    signal gpout_cs_l       : std_logic;
+
+
     signal rams_data_out    : std_logic_vector(7 downto 0);
 
     signal work_ram_cs_l    : std_logic;
 
     signal mem_wr_l         : std_logic;
+    signal io_wr_l          : std_logic;
+    signal io_rd_l          : std_logic;
+
+    signal wsel             : std_logic_vector(1 downto 0);
+    signal dipsw_reg        : std_logic_vector(7 downto 0);
 
 begin
     -- drive IO
     JA1     <= clk25;
     JA2     <= clk_div16;
-    led     <= sw(15 downto 12);
-
-    SEL     <= sw(15 downto 14);
 
     reset_l <= not i_reset;
 
@@ -118,13 +122,15 @@ begin
             o_clk_div16 => clk_div16
         );
 
-
+    --------------------------------------------------
+    -- IRQ
+    --------------------------------------------------
     -- /INT is level triggered, must be held until interrupt is acknowledged (/IORQ during M1 time)
     -- should also let n_reset so the component can properly initialize
     irq_req : entity work.sig_int
         port map(
             n_sig_in   => Vsync,
-            n_reset_in => (cpu_iorq_l or cpu_m1_l), -- n_IORQ = '0' and n_M1 = '0'
+            n_reset_in => (cpu_iorq_l or cpu_m1_l), -- IORQ == 0 and M1 == 0
             n_irq_out  => cpu_int_l
         );
 
@@ -153,23 +159,44 @@ begin
         );
 
     --------------------------------------------------
-    -- primary addr decode
+    -- primary addr decode (chip selects)
     --------------------------------------------------
     program_rom_cs_l <= '0' when cpu_addr(15) = '0' else '1'; -- ROM at $0000, RAM at $8000
 
     work_ram_cs_l    <= '0' when cpu_addr(15 downto 11) = "10000" else '1'; -- Work RAM at $8000 (1k or 2k)
 --    gfx_ram_cs_l   <= '0' cpu_addr(15 downto 11) = "10001" else '1'; -- GFX RAM at $8800 (2k i.e. 
 
---    cpu_data_in    <= program_rom_din when program_rom_cs = '1' else rams_data_out; --was sorta working but latching stale data on the bus at times
+    gpout_cs_l       <= '0' when cpu_addr(7 downto 1)   = "1000000" and (io_wr_l = '0' or io_rd_l = '0') else '1'; -- 2 Bytes $80-$81
+    --gp1_cs_l       <= '0' when cpuAddress(7 downto 1) = "1000001" and (io_wr_l = '0' or io_rd_l = '0') else '1'; -- 2 Bytes $82-$83
+
+    -- mem r/w logic
+    --mem_rd_l         <= cpu_rd_l or cpu_mreq_l;  -- RD==0 and MREQ==0
+    io_rd_l          <= cpu_rd_l or cpu_iorq_l;  -- RD==0 and IOREQ==0
+    mem_wr_l         <= cpu_wr_l or cpu_mreq_l;  -- WR==0 and MREQ==0
+    io_wr_l          <= cpu_wr_l or cpu_iorq_l;  -- WR==0 and IOREQ==0
+
+    -------------------
+    -- cpu data in mux (bus isolation)
     cpu_data_in      <=
         program_rom_din when program_rom_cs_l = '0' else
         rams_data_out   when work_ram_cs_l    = '0' else
-        x"FF";
-
-    mem_wr_l         <= cpu_wr_l or cpu_mreq_l; -- WR and MREQ
+        x"FF"; -- should never be read by CPU?
 
 --    rams_data_in <= cpu_data_out when mem_wr_l = '0' else x"ZZ";
 --    rams_data_in <= cpu_data_out;
+
+    --------------------------------------------------
+    -- output driver
+    --------------------------------------------------
+    -- latch output port if selected -- todo [Synth 8-327] inferring latch for variable 'dipsw_reg_reg' 
+    -- Net u_cpu/u0/IORQ_n_reg_0[0] is a gated clock net sourced by a combinational pin u_cpu/u0/dipsw_reg_reg[7]_i_1/O
+    dipsw_reg        <= cpu_data_out when gpout_cs_l = '0';
+                        -- and (io_wr_l = '0' or io_rd_l = '0') 
+                        -- else x"FF";
+
+    -- wsel          <= sw(15 downto 14);
+    wsel             <= dipsw_reg(7 downto 6);
+    led(3 downto 0)  <= dipsw_reg(7 downto 4);
 
     --------------------------------------------------
     -- work RAM
@@ -177,10 +204,10 @@ begin
   u_rams : entity work.rams_08
     port map (
       a    => cpu_addr(9 downto 0),
-      di   => cpu_data_out,  --rams_data_in
+      di   => cpu_data_out,
       do   => rams_data_out,
       we   => not(mem_wr_l or work_ram_cs_l), -- write enable, active high
-      en   =>  '1',                           -- chip enable, active high
+      en   => '1',                            -- chip enable, active high
       clk  => clk_div16
       );
 --
@@ -227,9 +254,9 @@ begin
     -- select image generator and drive the VGA outputs
     --------------------------------------------------
     -- todo component see startingelectronics.org/software/VHDL-CPLD-course/tut4-multiplexers/
-    rgb_reg <= rgb_reg_0 when (SEL = "00") else
-               rgb_reg_1 when (SEL = "01") else
-               rgb_reg_2 when (SEL = "10") else
+    rgb_reg <= rgb_reg_0 when (wsel = "00") else
+               rgb_reg_1 when (wsel = "01") else
+               rgb_reg_2 when (wsel = "10") else
                (others => '1');
 
     vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
