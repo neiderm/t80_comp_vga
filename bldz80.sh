@@ -3,10 +3,9 @@
 TEST_ASM="./test.asm"
 echo z80asm $TEST_ASM
 
-#z80asm  ./basys3_multicomp_z80.srcs/sources_1/imports/mem/test.asm  a.bin
 z80asm $TEST_ASM
 
-
-od -v  -t x1 a.bin | cut -c 9- | tr '\ ' '\n' > ./z80test_hex.dat
+#./t80_comp_vga.srcs/sources_1/new/roms_1.vhd
+od -v  -t x1 a.bin | cut -c 9- | tr '\ ' '\n' > ./t80_comp_vga.srcs/sources_1/new/z80test_hex.dat
 
 z80dasm  -t a.bin | head -n10

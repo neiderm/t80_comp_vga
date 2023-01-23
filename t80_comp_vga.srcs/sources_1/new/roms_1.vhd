@@ -52,7 +52,6 @@ begin
 	return RAM;
 end function;
 
---signal ROM : RamType := InitRamFromFile("/home/xubuntu/src/t80_comp_vga/z80test_hex.dat");
 Signal ROM : RamType := InitRamFromFile("z80test_hex.dat"); -- added to Vivado project
 
 begin
