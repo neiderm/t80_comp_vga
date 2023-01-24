@@ -89,17 +89,15 @@ architecture Behavioral of t80_comp_top is
 
     signal gpout_cs_l       : std_logic;
 
-
     signal rams_data_out    : std_logic_vector(7 downto 0);
-
     signal work_ram_cs_l    : std_logic;
 
     signal mem_wr_l         : std_logic;
     signal io_wr_l          : std_logic;
     signal io_rd_l          : std_logic;
 
+    signal outp_reg         : std_logic_vector(7 downto 0);
     signal wsel             : std_logic_vector(1 downto 0);
-    signal dipsw_reg        : std_logic_vector(7 downto 0);
 
 begin
     -- drive IO
@@ -188,15 +186,17 @@ begin
     --------------------------------------------------
     -- output driver
     --------------------------------------------------
-    -- latch output port if selected -- todo [Synth 8-327] inferring latch for variable 'dipsw_reg_reg' 
-    -- Net u_cpu/u0/IORQ_n_reg_0[0] is a gated clock net sourced by a combinational pin u_cpu/u0/dipsw_reg_reg[7]_i_1/O
-    dipsw_reg        <= cpu_data_out when gpout_cs_l = '0';
-                        -- and (io_wr_l = '0' or io_rd_l = '0') 
-                        -- else x"FF";
+    u_gpout_reg : entity work.registers_4
+    port map (
+        C  => clk,
+        CE => not gpout_cs_l,
+        D  => cpu_data_out,
+        Q  => outp_reg
+    );
 
     -- wsel          <= sw(15 downto 14);
-    wsel             <= dipsw_reg(7 downto 6);
-    led(3 downto 0)  <= dipsw_reg(7 downto 4);
+    wsel             <= outp_reg(7 downto 6);
+    led(3 downto 0)  <= outp_reg(7 downto 4);
 
     --------------------------------------------------
     -- work RAM
