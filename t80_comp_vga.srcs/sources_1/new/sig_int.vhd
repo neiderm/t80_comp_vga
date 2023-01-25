@@ -40,17 +40,18 @@ architecture Behavioral of sig_int is
     signal irq_latch : std_logic;
 
 begin
-    process (n_sig_in)
+    process (n_sig_in, n_reset_in)
     begin
         if falling_edge(n_sig_in) then
-            irq_latch <= '0';
+            irq_latch <= '0'; -- set output
             --vsync_cntr <= vsync_cntr + 1;
         end if;
 
         if n_reset_in = '0' then
-            irq_latch <= '1';
+            irq_latch <= '1'; -- reset output
         end if;
-        n_irq_out <= irq_latch;
+        -- n_irq_out <= irq_latch; -- wrong! see warning read in the process not in the sensitivity list
 
     end process;
+    n_irq_out <= irq_latch;
 end Behavioral;
