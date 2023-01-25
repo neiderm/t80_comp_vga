@@ -98,6 +98,7 @@ architecture Behavioral of t80_comp_top is
 
     signal outp_reg         : std_logic_vector(7 downto 0);
     signal wsel             : std_logic_vector(1 downto 0);
+    signal irq_req_out      : std_logic;
 
 begin
     -- drive IO
@@ -124,13 +125,14 @@ begin
     -- IRQ
     --------------------------------------------------
     -- /INT is level triggered, must be held until interrupt is acknowledged (/IORQ during M1 time)
-    -- should also let n_reset so the component can properly initialize
-    irq_req : entity work.sig_int
+    irq_req : entity work.registers_2
         port map(
-            n_sig_in   => Vsync,
-            n_reset_in => (cpu_iorq_l or cpu_m1_l), -- IORQ == 0 and M1 == 0
-            n_irq_out  => cpu_int_l
+            C     => Vsync,
+            D     => '1', -- sets latch to 1 on falling vsync
+            CLR   => not (cpu_iorq_l or cpu_m1_l), -- IORQ == 0 and M1 == 0
+            Q     => irq_req_out
         );
+        cpu_int_l <= NOT(irq_req_out);
 
     --------------------------------------------------
     -- Instantiate t80
@@ -188,7 +190,7 @@ begin
     --------------------------------------------------
     u_gpout_reg : entity work.registers_4
     port map (
-        C  => clk,
+        C  => clk_div16,
         CE => not gpout_cs_l,
         D  => cpu_data_out,
         Q  => outp_reg
