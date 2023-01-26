@@ -61,6 +61,7 @@ architecture Behavioral of t80_comp_top is
     signal rgb_reg_0        : std_logic_vector(11 downto 0);
     signal rgb_reg_1        : std_logic_vector(11 downto 0);
     signal rgb_reg_2        : std_logic_vector(11 downto 0);
+    signal rgb_reg_3        : std_logic_vector(11 downto 0);
 
     signal rgb_reg          : std_logic_vector(11 downto 0);
 
@@ -182,9 +183,6 @@ begin
         rams_data_out   when work_ram_cs_l    = '0' else
         x"FF"; -- should never be read by CPU?
 
---    rams_data_in <= cpu_data_out when mem_wr_l = '0' else x"ZZ";
---    rams_data_in <= cpu_data_out;
-
     --------------------------------------------------
     -- output driver
     --------------------------------------------------
@@ -212,19 +210,7 @@ begin
       en   => '1',                            -- chip enable, active high
       clk  => clk_div16
       );
---
-    --------------------------------------------------
---  u_rams : entity work.rams_sp_rf
---    port map (
---      -- clock delay from rams?
---      addr => cpu_addr(9 downto 0),
---      di   => cpu_data_out,
---      do   => rams_data_out,
---      we   => not(mem_wr_l or work_ram_cs_l),
---      en   => '1', --tmp? not work_ram_cs_l,
---      clk  => clk_div16
---      );
---
+
     --------------------------------------------------
     -- internal program rom
     --------------------------------------------------
@@ -255,11 +241,21 @@ begin
     --------------------------------------------------
     -- select image generator and drive the VGA outputs
     --------------------------------------------------
-    -- todo component see startingelectronics.org/software/VHDL-CPLD-course/tut4-multiplexers/
-    rgb_reg <= rgb_reg_0 when (wsel = "00") else
-               rgb_reg_1 when (wsel = "01") else
-               rgb_reg_2 when (wsel = "10") else
-               (others => '1');
+-- old one
+--    rgb_reg <= rgb_reg_0 when (wsel = "00") else
+--               rgb_reg_1 when (wsel = "01") else
+--               rgb_reg_2 when (wsel = "10") else
+--               (others => '1');
+-- RTL schem looks better
+    video_mux : entity work.multiplexers_2
+        port map(
+            sel => wsel,
+            di0 => rgb_reg_0,
+            di1 => rgb_reg_1,
+            di2 => rgb_reg_2,
+            di3 => "111100001111",
+            do => rgb_reg
+        );
 
     vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
     vgaGreen <= (rgb_reg(7 downto 4)) when video_on = '1' else (others  => '0');
