@@ -186,12 +186,13 @@ begin
     --------------------------------------------------
     -- output driver
     --------------------------------------------------
-    u_gpout_reg : entity work.registers_4
+    u_gpout_reg : entity work.registers_1
     port map (
-        C  => clk_div16,
-        CE => not gpout_cs_l,
-        D  => cpu_data_out,
-        Q  => outp_reg
+        clk  => clk_div16,
+        ce   => not gpout_cs_l,
+        clr  => i_reset,      -- clr active high i.e. (!reset_l)
+        d_in => cpu_data_out,
+        dout => outp_reg
     );
 
     -- wsel          <= sw(15 downto 14);
