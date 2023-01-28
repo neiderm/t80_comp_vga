@@ -1,58 +1,75 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 12/28/2022 04:24:52 PM
--- Design Name: 
--- Module Name: simple_image_gen - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- GN: 
---  simple vga test from switches ECE448_lecture9_VGA_1.pdf and P. Chu, FPGA Prototyping by VHDL Examples Chapter 12, VGA Controller I:
+-- Simple VGA Pattern Generator
+-- Modified for use as component in t80_comp_vga and 12-bit RGB output.
+-- Original file:
+--  http://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/1998_w/Altera_UP1_Board_Map/vga.html#anchor2505379
 ----------------------------------------------------------------------------------
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+-- RGB VGA test pattern  Rob Chapman  Mar 9, 1998
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+ -- This file uses the VGA driver and creates 3 squares on the screen which
+ -- show all the available colors from mixing red, green and blue
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+Library IEEE;
+use IEEE.STD_Logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
-entity simple_image_gen is
-    Port ( clk      : in STD_LOGIC;
-           disp_ena : in STD_LOGIC;       -- not really used, as long as nothing is registered in this module
-           reset_n  : in STD_LOGIC;
-           -- 12-bit RGB for Basys-3
-           bits_in  :  IN  STD_LOGIC_VECTOR(11 DOWNTO 0);
-           rgb      :  OUT  STD_LOGIC_VECTOR(11 DOWNTO 0));
-end simple_image_gen;
+entity vgatest is
+--  port(clock         : in std_logic;
+--       R, G, B, H, V : out std_logic);
+    port( row, column : in INTEGER;-- std_logic_vector(9 downto 0);
+          RGBout      : out std_logic_vector(11 downto 0));
+end entity;
 
-architecture Behavioral of simple_image_gen is
+architecture test of vgatest is
+
+--  component vgadrive is
+--    port( clock          : in std_logic;  -- 25.175 Mhz clock
+--        red, green, blue : in std_logic;  -- input values for RGB signals
+--        row, column      : out std_logic_vector(9 downto 0); -- for current pixel
+--        Rout, Gout, Bout, H, V : out std_logic); -- VGA drive signals
+--  end component;
+  
+--  signal row, column : std_logic_vector(9 downto 0);
+  signal red, green, blue : std_logic;
 
 begin
-    -- image generator from switches to rgb buffer
-    process (clk, reset_n)
-    begin
-        if reset_n = '0' then
-            rgb <= (others => '0');
+--  -- for debugging: to view the bit order
+--  VGA : component vgadrive
+--    port map ( clock => clock, red => red, green => green, blue => blue,
+--               row => row, column => column,
+--               Rout => R, Gout => G, Bout => B, H => H, V => V);
+ 
+  -- red square from 0,0 to 360, 350
+  -- green square from 0,250 to 360, 640
+  -- blue square from 120,150 to 480,500
+  RGB : process(row, column)
+  begin
+    -- wait until clock = '1';
+    
+    if  row < 360 and column < 380  then
+      red <= '1';
+    else
+      red <= '0';
+    end if;
+    
+    if  row < 360 and column > 260 and column < 640  then
+      green <= '1';
+    else
+      green <= '0';
+    end if;
+    
+    if  row > 120 and row < 480 and column > 140 and column < 500  then
+      blue <= '1';
+    else
+      blue <= '0';
+    end if;
 
-        elsif (clk'event and clk = '1') then
-            rgb <= bits_in(11 downto 0);
+  end process;
 
-        end if;
-    end process;
+  RGBout(11 downto 8) <= x"F" when red   = '1' else x"0";
+  RGBout( 7 downto 4) <= x"F" when green = '1' else x"0";
+  RGBout( 3 downto 0) <= x"F" when blue  = '1' else x"0";
 
-end Behavioral;
+end architecture;

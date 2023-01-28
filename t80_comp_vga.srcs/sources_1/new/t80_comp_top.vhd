@@ -254,43 +254,37 @@ begin
             di0 => rgb_reg_0,
             di1 => rgb_reg_1,
             di2 => rgb_reg_2,
-            di3 => "111100001111",
+            di3 => sw(11 downto 0), -- rgb_reg_3,
             do => rgb_reg
         );
-
+    -- rgb register gated onto VGA signals only during video on time
     vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
     vgaGreen <= (rgb_reg(7 downto 4)) when video_on = '1' else (others  => '0');
     vgaBlue  <= (rgb_reg(3 downto 0)) when video_on = '1' else (others  => '0');
 
     --------------------------------------------------
-    -- Instantiate image generator
+    -- Instantiate image generators
     --------------------------------------------------
-    image_gen_0 : entity work.simple_image_gen
-        port map(
-            clk      => clk,
-            reset_n  => reset_l,
-            disp_ena => video_on,
-            bits_in  => sw(11 downto 0),
-            rgb      => rgb_reg_0);
+--    rgb_reg_3 <= sw(11 downto 0) when video_on = '1' else (others  => '0'); -- switches directly into mux now
 
-    --------------------------------------------------
-    -- Instantiate image generator 2 to rgb buffer
-    --------------------------------------------------
+    image_gen_0 : entity work.vgatest
+        port map(
+            row      => pixel_y,
+            column   => pixel_x,
+            RGBout   => rgb_reg_0);
+
     image_gen_1 : entity work.hw_image_generator
         port map(
-            disp_ena => video_on,
-            row      => pixel_x,
-            column   => pixel_y,
+            disp_ena => '1', -- video_on,
+            row      => pixel_y,
+            column   => pixel_x,
             red      => rgb_reg_1(11 downto 8),
             green    => rgb_reg_1(7 downto 4),
             blue     => rgb_reg_1(3 downto 0));
 
-    --------------------------------------------------
-    -- Instantiate image generator 3 to rgb buffer
-    --------------------------------------------------
     image_gen_2 : entity work.sync_VGA_visualTest2
         port map(
-            disp_ena => video_on,
+            disp_ena => '1', -- video_on,
             pix_x    => pixel_x,
             pix_y    => pixel_y,
             VGA_R    => rgb_reg_2(11 downto 8),
