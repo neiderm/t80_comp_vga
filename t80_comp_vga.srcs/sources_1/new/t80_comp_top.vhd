@@ -184,7 +184,7 @@ begin
         x"FF"; -- should never be read by CPU?
 
     --------------------------------------------------
-    -- output driver
+    -- output driver        TODO  button Input -> NMI -> flash all LEDs while button held
     --------------------------------------------------
     u_gpout_reg : entity work.registers_1
     port map (
@@ -254,7 +254,7 @@ begin
             di0 => rgb_reg_0,
             di1 => rgb_reg_1,
             di2 => rgb_reg_2,
-            di3 => sw(11 downto 0), -- rgb_reg_3,
+            di3 => rgb_reg_3, -- sw(11 downto 0), -- rgb_reg_3,
             do => rgb_reg
         );
     -- rgb register gated onto VGA signals only during video on time
@@ -290,5 +290,13 @@ begin
             VGA_R    => rgb_reg_2(11 downto 8),
             VGA_G    => rgb_reg_2(7 downto 4),
             VGA_B    => rgb_reg_2(3 downto 0));
+
+    image_gen_3 : entity work.roms_signal
+        port map(
+            clk    => clk_div16,
+            en     => '1', -- video_on,
+            pix_y    => pixel_y,
+            pix_x    => pixel_x,
+            RGB    => rgb_reg_3);
 
 end Behavioral;
