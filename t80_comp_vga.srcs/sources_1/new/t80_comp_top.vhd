@@ -216,6 +216,10 @@ begin
     -- internal program rom
     --------------------------------------------------
     u_program_rom : entity work.roms_1
+        generic map(
+            G_ADDR_BITS => 9, -- $0200 byte ROM
+            G_INIT_FILE => "z80test_hex.dat" -- added hex file to project to avoid pathing issues
+        )
         port map(
             clk_i  => clk_div16,
             en     => '1', -- program_rom_cs,
