@@ -1,4 +1,5 @@
-
+-- Original source:
+--   https://forum.digikey.com/uploads/short-url/qQ6EHbTWSZa5jbn0GF21Ku6Gw5X.vhd
 --------------------------------------------------------------------------------
 --
 --   FileName:         hw_image_generator.vhd
@@ -25,10 +26,11 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY hw_image_generator IS
-  GENERIC(
-    pixels_y :  INTEGER := 160;   --row that first color will persist until
-    pixels_x :  INTEGER := 160);  --column that first color will persist until
+--  GENERIC(
+--    pixels_y :  INTEGER := 160;   --row that first color will persist until
+--    pixels_x :  INTEGER := 160);  --column that first color will persist until
   PORT(
+    clk_in   :  IN   STD_LOGIC;
     disp_ena :  IN   STD_LOGIC;  --display enable ('1' = display time, '0' = blanking time)
     row      :  IN   INTEGER;    --row pixel coordinate
     column   :  IN   INTEGER;    --column pixel coordinate
@@ -39,25 +41,41 @@ ENTITY hw_image_generator IS
 END hw_image_generator;
 
 ARCHITECTURE behavior OF hw_image_generator IS
-BEGIN
-  PROCESS(disp_ena, row, column)
-  BEGIN
 
+    signal rgb_reg  : std_logic_vector(11 downto 0);
+
+BEGIN
+    image_gen_3 : entity work.roms_signal
+        port map(
+            clk    => clk_in,
+            en     => disp_ena,
+            pix_y  => row,
+            pix_x  => column,
+            data   => rgb_reg);
+
+  PROCESS(disp_ena, row, column, rgb_reg)
+  BEGIN
     IF(disp_ena = '1') THEN        --display time
-      IF(row < pixels_y AND column < pixels_x) THEN
-        red <= (OTHERS => '0');
-        green  <= (OTHERS => '0');
-        blue <= (OTHERS => '1');
-      ELSE
-        red <= (OTHERS => '1');
-        green  <= (OTHERS => '1');
-        blue <= (OTHERS => '0');
-      END IF;
+
+      red <= rgb_reg(11 downto 8);
+      green <= rgb_reg(7 downto 4);
+      blue <= rgb_reg(3 downto 0);
+
+----      IF(row < pixels_y AND column < pixels_x) THEN
+--      IF(row < 16 AND column < 640) THEN  -- tmp test
+--        red <= rgb_reg(11 downto 8);
+--        green <= rgb_reg(7 downto 4);
+--        blue <= rgb_reg(3 downto 0);
+--      ELSE
+--        red <= (OTHERS => '1');
+--        green  <= (OTHERS => '1');
+--        blue <= (OTHERS => '1');
+--      END IF;
     ELSE                           --blanking time
       red <= (OTHERS => '0');
       green <= (OTHERS => '0');
       blue <= (OTHERS => '0');
-    END IF;
-  
+    END IF;  
   END PROCESS;
+
 END behavior;

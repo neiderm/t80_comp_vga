@@ -61,9 +61,7 @@ architecture Behavioral of t80_comp_top is
     signal rgb_reg_0        : std_logic_vector(11 downto 0);
     signal rgb_reg_1        : std_logic_vector(11 downto 0);
     signal rgb_reg_2        : std_logic_vector(11 downto 0);
-    signal rgb_reg_3        : std_logic_vector(11 downto 0);
-
-    signal rgb_reg          : std_logic_vector(11 downto 0);
+    signal rgb_reg_Out      : std_logic_vector(11 downto 0);
 
     signal video_on         : std_logic;
     signal pixel_x, pixel_y : integer;
@@ -126,7 +124,7 @@ begin
     -- IRQ
     --------------------------------------------------
     -- /INT is level triggered, must be held until interrupt is acknowledged (/IORQ during M1 time)
-    irq_req : entity work.registers_2
+    u_irq_req : entity work.registers_2
         port map(
             C     => Vsync,
             D     => '1', -- sets latch to 1 on falling vsync
@@ -230,7 +228,7 @@ begin
     --------------------------------------------------
     -- video subsystem
     --------------------------------------------------
-    vga_control_unit : entity work.vga_controller
+    u_vga_control : entity work.vga_controller
         port map(
             pixel_clk => clk25,
             reset_n   => reset_l,
@@ -246,31 +244,23 @@ begin
     --------------------------------------------------
     -- select image generator and drive the VGA outputs
     --------------------------------------------------
--- old one
---    rgb_reg <= rgb_reg_0 when (wsel = "00") else
---               rgb_reg_1 when (wsel = "01") else
---               rgb_reg_2 when (wsel = "10") else
---               (others => '1');
--- RTL schem looks better
-    video_mux : entity work.multiplexers_2
+    u_video_mux : entity work.multiplexers_2
         port map(
             sel => wsel,
             di0 => rgb_reg_0,
             di1 => rgb_reg_1,
             di2 => rgb_reg_2,
-            di3 => rgb_reg_3, -- sw(11 downto 0), -- rgb_reg_3,
-            do => rgb_reg
+            di3 => sw(11 downto 0),
+            do => rgb_reg_Out
         );
     -- rgb register gated onto VGA signals only during video on time
-    vgaRed   <= (rgb_reg(11 downto 8)) when video_on = '1' else (others => '0');
-    vgaGreen <= (rgb_reg(7 downto 4)) when video_on = '1' else (others  => '0');
-    vgaBlue  <= (rgb_reg(3 downto 0)) when video_on = '1' else (others  => '0');
+    vgaRed   <= (rgb_reg_Out(11 downto 8)) when video_on = '1' else (others => '0');
+    vgaGreen <= (rgb_reg_Out(7 downto 4)) when video_on = '1' else (others  => '0');
+    vgaBlue  <= (rgb_reg_Out(3 downto 0)) when video_on = '1' else (others  => '0');
 
     --------------------------------------------------
     -- Instantiate image generators
     --------------------------------------------------
---    rgb_reg_3 <= sw(11 downto 0) when video_on = '1' else (others  => '0'); -- switches directly into mux now
-
     image_gen_0 : entity work.vgatest
         port map(
             row      => pixel_y,
@@ -279,7 +269,8 @@ begin
 
     image_gen_1 : entity work.hw_image_generator
         port map(
-            disp_ena => '1', -- video_on,
+            clk_in   => clk_div16,
+            disp_ena => video_on,
             row      => pixel_y,
             column   => pixel_x,
             red      => rgb_reg_1(11 downto 8),
@@ -288,19 +279,11 @@ begin
 
     image_gen_2 : entity work.sync_VGA_visualTest2
         port map(
-            disp_ena => '1', -- video_on,
+            disp_ena => video_on,
             pix_x    => pixel_x,
             pix_y    => pixel_y,
             VGA_R    => rgb_reg_2(11 downto 8),
             VGA_G    => rgb_reg_2(7 downto 4),
             VGA_B    => rgb_reg_2(3 downto 0));
-
-    image_gen_3 : entity work.roms_signal
-        port map(
-            clk    => clk_div16,
-            en     => '1', -- video_on,
-            pix_y    => pixel_y,
-            pix_x    => pixel_x,
-            RGB    => rgb_reg_3);
 
 end Behavioral;
