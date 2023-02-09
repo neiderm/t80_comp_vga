@@ -267,15 +267,15 @@ begin
             column   => pixel_x,
             RGBout   => rgb_reg_0);
 
-    image_gen_1 : entity work.hw_image_generator
+    -- added a reset to cleanup warnings
+    bmp_img_gen : entity work.roms_signal
         port map(
-            clk_in   => clk_div16,
-            disp_ena => video_on,
-            row      => pixel_y,
-            column   => pixel_x,
-            red      => rgb_reg_1(11 downto 8),
-            green    => rgb_reg_1(7 downto 4),
-            blue     => rgb_reg_1(3 downto 0));
+            reset_n => reset_l,
+            clk     => clk_div16,
+            en      => '1', -- video_on, The RAMB36E1 bmp_img_gen/data_reg_0 has an input control pin bmp_img_gen/data_reg_0/ENARDEN (net: bmp_img_gen/video_on) which is driven by a register (u_vga_control/disp_ena_reg) that has an active asychronous set or reset
+            pix_y   => pixel_y,
+            pix_x   => pixel_x,
+            data    => rgb_reg_1);
 
     image_gen_2 : entity work.sync_VGA_visualTest2
         port map(
