@@ -37,7 +37,11 @@ architecture syn of rams_08 is
 	9 => x"F5", 
 	10 to 1023 => x"00"
 	);
-	signal read_a : std_logic_vector(9 downto 0);
+--RAMB18 async control check: The RAMB18E1 u_rams/RAM_reg has an input control pin u_rams/RAM_reg/ADDRARDADDR[10] 
+--(net: u_rams/A[6]) which is driven by a register (u_cpu/u0/A_reg[6]) that has an active asychronous set or reset.
+--	signal read_a : std_logic_vector(9 downto 0); -- .5 BRAM
+	 -- added initialization to quash vivaodo warning
+	signal read_a : std_logic_vector(9 downto 0)  := (others => '0'); -- not BRAM but the DRC is gone
 begin
 	process (clk)
 	begin

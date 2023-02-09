@@ -36,7 +36,6 @@ architecture behavioral of roms_1 is
 
 	impure function InitRamFromFile (RamFileName : in STRING) return RamType is
 		file RamFile : text is in RamFileName;
-		file TestFile : text;
 		variable RamFileLine : line;
 		variable RAM : RamType;
 	begin
