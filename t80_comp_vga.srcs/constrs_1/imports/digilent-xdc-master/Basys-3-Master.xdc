@@ -155,3 +155,9 @@ set_property -dict { PACKAGE_PIN R19   IOSTANDARD LVCMOS33 } [get_ports Vsync]
 ## Configuration options, can be used for all designs
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 set_property CFGBVS VCCO [current_design]
+
+create_generated_clock -name {u_clocks/Q[0]} -source [get_ports clk] -divide_by 2 [get_pins {u_clocks/clk_divider_reg[1]/Q}]
+create_generated_clock -name {u_clocks/Q[1]} -source [get_ports clk] -divide_by 8 [get_pins {u_clocks/clk_divider_reg[3]/Q}]
+create_generated_clock -name u_vga_control/Vsync_OBUF -source [get_pins {u_clocks/clk_divider_reg[1]/Q}] -divide_by 4 [get_pins u_vga_control/v_sync_reg/Q]
+
+set_false_path -from [get_ports *reset*] -to [get_clocks *sys*]
